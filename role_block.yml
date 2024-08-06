@@ -1,0 +1,43 @@
+- hosts: host11
+  vars:
+   log_content: ""
+  tasks:
+
+    - name: check ping 
+      ping:
+      register: ping_result 
+
+    - name:  Roles task
+      block: 
+##### check conexion.
+        - name: check conexion al host
+          ping:
+          register: ping_result 
+##### Roles Role
+        - name: Role1 check
+          include_role:
+            name: role1
+            tasks_from: check_service
+          register: check_service
+
+        - name: Agregar chequeo_service_plan_inodos_output
+          set_fact:
+            log_content: "{{ log_content }}\n{{ inventory_hostname }} - {{ ansible_date_time.iso8601_micro }}: {{ check_service.output }}\n"
+
+
+      when: ping_result.ping is defined and ping_result.ping == "pong"
+      rescue:
+     
+        
+        - name: send email
+          mail:
+           host: smtp.gmail.com
+           port: 25
+           from: mail@gmail.com
+           username: user@gmail.com
+           password: password
+           to: mail@gmail.com
+           subject: Ansible playbook {{ ansible_hostname }}
+           body: " check "
+          delegate_to: localhost
+
